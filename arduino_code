@@ -1,0 +1,154 @@
+#include <Arduino.h>
+#include <rpcWiFi.h>
+#include <Adafruit_SHT4x.h>
+#include <TFT_eSPI.h>
+#include <WiFiUdp.h>
+
+// Wi-Fi config
+const char* ssid     = "Mlicking";
+const char* password = "12345678";
+
+// UDP config
+const char* udpHost = "146.190.212.1";
+const uint16_t udpPort = 5005;
+const uint16_t localPort = 6000;
+
+// Global objects
+WiFiUDP udp;
+Adafruit_SHT4x sht4x;
+TFT_eSPI tft;
+TFT_eSprite spr(&tft);
+
+const int sensorPin = A0;
+const int relayPin = 7;
+const int soilThreshold = 512;
+
+bool pumpOn = false;
+unsigned long lastSensorRead = 0;
+unsigned long lastWaterTime = 0;
+unsigned long pumpStartTime = 0;
+unsigned long displayInterval = 3000;
+unsigned long sensorInterval = 5000;
+unsigned long pumpDuration = 60000;
+unsigned long pumpCooldown = 10000;
+
+float temperature = 0;
+float humidity = 0;
+int soilMoisture = 0;
+int lightPercent = 0;
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) delay(10);
+
+  tft.begin();
+  tft.setRotation(3);
+  tft.fillScreen(TFT_WHITE);
+  tft.setTextColor(TFT_BLACK);
+  tft.setTextSize(2);
+  tft.drawString("Starting up...", 50, 50);
+  spr.createSprite(TFT_WIDTH, TFT_HEIGHT);
+
+  if (!sht4x.begin()) {
+    Serial.println("ERROR: SHT40 not found!");
+    while (1) delay(100);
+  }
+
+  pinMode(WIO_LIGHT, INPUT);
+  pinMode(WIO_BUZZER, OUTPUT);
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, LOW);
+
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to Wi-Fi");
+  unsigned long t0 = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - t0 < 10000) {
+    Serial.print('.');
+    delay(500);
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("\nWi-Fi FAILED");
+    tft.fillScreen(TFT_RED);
+    tft.drawString("Wi-Fi Failed!", 50, 50);
+    while (1) delay(1000);
+  }
+  Serial.println("\nWi-Fi connected, IP: " + WiFi.localIP().toString());
+
+  udp.begin(localPort);
+  Serial.printf("UDP ready on local port %u\n", localPort);
+}
+
+void sendUDP(float temp, float hum, int soil, int light) {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  String payload = String("{") +
+    "\"temperature\":" + String(temp, 2) + "," +
+    "\"humidity\":" + String(hum, 2) + "," +
+    "\"soil_moisture\":" + String(soil) + "," +
+    "\"light_intensity\":" + String(light) +
+    "}";
+
+  udp.beginPacket(udpHost, udpPort);
+  udp.write((const uint8_t*)payload.c_str(), payload.length());
+  udp.endPacket();
+
+  Serial.println("UDP packet sent: " + payload);
+}
+
+void updateDisplay(float temp, float hum, int soil, int light, bool pumpStatus) {
+  spr.fillSprite(TFT_WHITE);
+  spr.setTextColor(TFT_BLACK);
+  spr.setTextSize(2);
+
+  spr.drawString("Temp: " + String(temp, 1) + " C", 10, 10);
+  spr.drawString("Hum: " + String(hum, 1) + " %", 10, 40);
+  spr.drawString("Soil: " + String(soil), 10, 70);
+  spr.drawString("Light: " + String(light) + " %", 10, 100);
+  spr.drawString("Pump: " + String(pumpStatus ? "ON" : "OFF"), 10, 140);
+
+  spr.pushSprite(0, 0);
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  // Handle sensor reading and sending every few seconds
+  if (now - lastSensorRead >= sensorInterval) {
+    lastSensorRead = now;
+
+    sensors_event_t humEvent, tempEvent;
+    sht4x.getEvent(&humEvent, &tempEvent);
+
+    temperature = tempEvent.temperature;
+    humidity = humEvent.relative_humidity;
+    int lightRaw = analogRead(WIO_LIGHT);
+    lightPercent = map(lightRaw, 0, 1023, 0, 100);
+    soilMoisture = analogRead(sensorPin);
+
+    Serial.printf("T:%.2f°C H:%.2f%% Soil:%d Light:%d%%\n",
+      temperature, humidity, soilMoisture, lightPercent);
+
+    sendUDP(temperature, humidity, soilMoisture, lightPercent);
+
+    // If soil is dry and pump is not already on, start it
+    if (!pumpOn && soilMoisture < soilThreshold && (now - lastWaterTime > pumpCooldown)) {
+      digitalWrite(relayPin, HIGH);
+      pumpOn = true;
+      pumpStartTime = now;
+      lastWaterTime = now;
+      Serial.println("Pump turned ON");
+    }
+  }
+
+  // Check if pump should be turned off
+  if (pumpOn && (now - pumpStartTime >= pumpDuration)) {
+    digitalWrite(relayPin, LOW);
+    pumpOn = false;
+    Serial.println("Pump turned OFF");
+  }
+
+  // Refresh screen periodically
+  if (now - lastWaterTime >= displayInterval) {
+    updateDisplay(temperature, humidity, soilMoisture, lightPercent, pumpOn);
+  }
+}

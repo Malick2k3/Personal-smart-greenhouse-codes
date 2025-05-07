@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up - Smart Greenhouse</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #c3ec52, #0ba29d);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      flex-direction: column;
+    }
+
+    nav {
+      width: 100%;
+      padding: 20px;
+      background-color: #0ba29d;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .nav-links a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      margin-top: 80px; /* To make space for the fixed navbar */
+      animation: fadeIn 0.7s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      margin-bottom: 25px;
+      color: #0ba29d;
+      font-size: 1.8rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #0ba29d;
+      outline: none;
+      box-shadow: 0 0 6px rgba(11, 162, 157, 0.35);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #0ba29d;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 12px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #08736f;
+    }
+
+    p {
+      margin-top: 20px;
+      font-size: 0.95rem;
+    }
+
+    a {
+      color: #0ba29d;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 28px 18px;
+        border-radius: 12px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      input, button {
+        font-size: 0.95rem;
+      }
+    }
+
+    #error {
+      color: red;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-brand">🌿 Smart Greenhouse</div>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="container"> 
+    <h1>Create Account</h1>
+    
+
+    <form onsubmit="signup(event)">
+        <input type="text" id="fullName" placeholder="Full Name" required pattern=".*\S.*" />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required pattern=".{6,}" title="At least 6 characters" />
+          <button type="submit">Sign Up</button>
+        <p id="error"></p>
+    </form>
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+  </div>
+
+
+  <script src="https://unpkg.com/pocketbase@latest/dist/pocketbase.umd.js"></script>
+<script>
+
+  const pb = new PocketBase('https://smartgreenhouse.daust.cloud');
+
+
+
+  async function signup(event) {
+    event.preventDefault();
+
+    const fullName = document.getElementById("fullName").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      await pb.collection('users').create({
+        email,
+        password,
+        passwordConfirm: password,
+        fullName
+      });
+
+      alert("Account created! You can now login.");
+      window.location.href = "login.html";
+    } catch (err) {
+      document.getElementById("error").innerText = err.message || "Signup failed.";
+    }
+  }
+</script>
+
+  
+</body>
+</html>

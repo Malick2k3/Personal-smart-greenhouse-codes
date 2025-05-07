@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Greenhouse Dashboard</title>
+  <script src="https://unpkg.com/pocketbase@0.26.0/dist/pocketbase.umd.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 0;
+    }
+    nav {
+      width: 100%;
+      padding: 20px;
+      background-color: #0ba29d;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .nav-links a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+    .main-content {
+      padding: 20px;
+      margin-top: 100px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #333;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .sensor {
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .sensor h2 {
+      margin-bottom: 10px;
+      font-size: 1.2em;
+      color: #555;
+    }
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0;
+      accent-color: #4CAF50;
+    }
+    p {
+      font-size: 1.4em;
+      margin: 0;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .switch input { display: none; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px; width: 26px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-10px); }
+      80% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-brand">🌿 Smart Greenhouse</div>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <h1>🌿 Smart Greenhouse Dashboard</h1>
+    <div class="grid">
+      <div class="sensor">
+        <h2>🌡 Temperature</h2>
+        <input type="range" min="0" max="50" value="0" id="tempGauge" disabled>
+        <p id="temp">-- °C</p>
+      </div>
+      <div class="sensor">
+        <h2>💧 Soil Moisture</h2>
+        <input type="range" min="0" max="100" value="0" id="moistureGauge" disabled>
+        <p id="moisture">-- %</p>
+      </div>
+      <div class="sensor">
+        <h2>💨 Humidity</h2>
+        <input type="range" min="0" max="100" value="0" id="humidityGauge" disabled>
+        <p id="humidity">-- %</p>
+      </div>
+      <div class="sensor">
+        <h2>☀ Light Level</h2>
+        <input type="range" min="0" max="1023" value="0" id="lightGauge" disabled>
+        <p id="light">-- lux</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pb = new PocketBase('https://smartgreenhouse.daust.cloud');
+
+    // Function to fetch sensor data from PocketBase
+    async function fetchSensorData() {
+      try {
+        // Fetch latest reading from PocketBase
+        const result = await pb.collection('readings').getList(1, 1, { sort: '-created' });
+        const latestReading = result.items[0];
+
+        if (latestReading) {
+          const sensors = {
+            temp: latestReading.temperature,
+            moisture: latestReading.soil_moisture,
+            humidity: latestReading.humidity,
+            light: latestReading.light_intensity
+          };
+
+          Object.entries(sensors).forEach(([key, value]) => {
+            const gaugeElement = document.getElementById(`${key}Gauge`);
+            const textElement = document.getElementById(key);
+            if (gaugeElement && textElement) {
+              gaugeElement.value = value;
+              textElement.innerText = key === 'temp' ? `${value} °C` :
+                                     key === 'humidity' ? `${value} %` :
+                                     key === 'moisture' ? `${value} %` :
+                                     `${value} lx`;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error in fetchSensorData:', error);
+      }
+    }
+
+    // Refresh data every 3 seconds
+    setInterval(fetchSensorData, 3000);
+    fetchSensorData(); // Initial fetch
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'939a0515be1b8bba',t:'MTc0NjIxNTEzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>

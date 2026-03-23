@@ -1,86 +1,85 @@
-🌿 Smart Greenhouse Project
-A collaborative IoT project that monitors and controls plant growth conditions in real-time using sensors, automation, and web technologies.
+# Smart Greenhouse
 
-Overview
-This Smart Greenhouse system uses a microcontroller with various sensors to collect environmental data (temperature, humidity, soil moisture, light) and automatically control a watering system. The data is transmitted to a web dashboard for remote monitoring and control.
+Smart Greenhouse is an IoT student project built around a Wio Terminal, a small sensor stack, and a web dashboard for remote monitoring. The system reads temperature, humidity, soil moisture, and light intensity, sends the readings over Wi-Fi, and turns a water pump on when the soil gets too dry.
 
-Features
-Real-time Environmental Monitoring
+![Smart greenhouse setup](./frontend/assets/greenhouse-project.jpg)
 
-Temperature and humidity tracking with SHT4x sensor
+## What the project does
 
-Soil moisture detection
+- Reads greenhouse conditions from an SHT4x sensor, soil moisture probe, and light sensor
+- Displays the latest values on the Wio Terminal screen
+- Sends sensor payloads over UDP to a backend workflow
+- Stores readings in PocketBase for dashboard access
+- Shows the latest greenhouse readings in a browser dashboard
+- Supports user signup and login for the web interface
 
-Light intensity measurement
+## Tech stack
 
-Automated Plant Care
+- Firmware: Arduino C++ on Wio Terminal
+- Data flow: Wi-Fi + UDP payloads
+- Storage and auth: PocketBase
+- Web interface: HTML, CSS, JavaScript
+- Backend utilities: Node.js scripts for reading PocketBase data
 
-Automatic watering system based on soil moisture levels
+## Repository layout
 
-Configurable thresholds and timing parameters
+```text
+.
+|-- backend
+|   |-- scripts
+|   `-- src
+|-- docs
+|-- firmware
+|-- frontend
+|   |-- assets
+|   `-- js
+`-- README.md
+```
 
-Remote Monitoring
+## How it works
 
-Web dashboard for real-time data visualization
+1. The Wio Terminal reads temperature, humidity, soil moisture, and light.
+2. The firmware checks the soil threshold and activates the relay-controlled pump when watering is needed.
+3. Sensor data is sent as a JSON payload over UDP.
+4. PocketBase stores the readings and provides access to them for the dashboard.
+5. The dashboard fetches the latest record and updates the gauges in the browser.
 
-Historical data logging and analysis
+The simple way to picture it is this: the firmware is the body, the dashboard is the face, and PocketBase is the memory in the middle.
 
-User-friendly Interface
+## Running the web interface
 
-Mobile-responsive web application
+The frontend is a small static site.
 
-Visual indicators for plant health status
+- Open [`frontend/index.html`](./frontend/index.html) in a browser to view the landing page
+- Use [`frontend/login.html`](./frontend/login.html) and [`frontend/signup.html`](./frontend/signup.html) for authentication
+- Open [`frontend/dashboard.html`](./frontend/dashboard.html) to view the latest sensor readings
 
-Technology Stack
-Hardware
-Arduino-compatible microcontroller (Wio Terminal)
+The shared PocketBase URL lives in [`frontend/js/config.js`](./frontend/js/config.js).
 
-SHT4x temperature and humidity sensor
+## Running the backend utilities
 
-Soil moisture sensor
-
-Light sensor
-
-Relay-controlled water pump
-
-TFT display for local readings
-
-Software
-Embedded C++ for microcontroller
-
-Express.js for backend server
-
-PocketBase for database
-
-HTML/CSS/JavaScript for frontend dashboard
-
-Getting Started
-Clone this repository
-
-Set up the hardware components according to the wiring diagram
-
-Upload the Arduino code to your microcontroller
-
-Install dependencies for the server:
-
-
+```bash
+cd backend
 npm install
-Run the server:
+npm run list:readings
+```
 
+If you want to use a different PocketBase instance, copy `backend/.env.example` to `.env` and update the URL.
 
-node server.js
-Access the dashboard at http://localhost:3000
+## Firmware setup
 
-Project Structure
-/arduino - Microcontroller code for sensor reading and pump control
+1. Copy [`firmware/config.example.h`](./firmware/config.example.h) to `firmware/config.h`
+2. Fill in your Wi-Fi credentials and UDP target
+3. Open [`firmware/wio_terminal_greenhouse.ino`](./firmware/wio_terminal_greenhouse.ino) in the Arduino IDE
+4. Install the required Wio Terminal, TFT, Wi-Fi, and SHT4x libraries
+5. Upload the sketch to the board
 
-/server - Backend server code for data processing and storage
+## Notes for reviewers
 
-/web - Frontend dashboard for visualization
+- This repo is focused on the project code and data flow, not on PCB or enclosure documentation
+- PocketBase is the persistent storage layer for readings and authentication
+- The backend folder contains utility scripts around PocketBase rather than a standalone Express API
 
-Contributors
-This project was developed by a team of 4 students:
+## Team
 
-1 Computer Science student (software development)
-
-3 Mechanical Engineering students (hardware design)
+This project was built as a small interdisciplinary team project with one computer science student and three mechanical engineering students.

@@ -79,8 +79,8 @@ Project Structure
 /web - Frontend dashboard for visualization
 
 Contributors
-This project was developed by a team of 5 students:
+This project was developed by a team of 4 students:
 
-2 Computer Science students (software development)
+1 Computer Science student (software development)
 
 3 Mechanical Engineering students (hardware design)

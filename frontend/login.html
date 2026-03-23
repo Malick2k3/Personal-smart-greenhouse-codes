@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Smart Greenhouse</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #a8edea, #fed6e3);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding-top: 80px;
+    }
+
+    nav {
+      width: 100%;
+      padding: 20px;
+      background-color: #0b6b63;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+      box-sizing: border-box;
+    }
+
+    .nav-brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .nav-links a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      animation: fadeIn 0.7s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #0b6b63;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: #0b6b63;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0b6b63;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #084740;
+    }
+
+    p {
+      margin-top: 20px;
+    }
+
+    a {
+      color: #0b6b63;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #errorMessage {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #d32f2f;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-brand">Smart Greenhouse</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Welcome Back</h1>
+    <form onsubmit="login(event)">
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <div id="errorMessage"></div>
+    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="https://unpkg.com/pocketbase@latest/dist/pocketbase.umd.js"></script>
+  <script>
+    const pb = new PocketBase(window.SMART_GREENHOUSE_CONFIG.pocketBaseUrl);
+
+    async function login(event) {
+      event.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await pb.collection("users").authWithPassword(email, password);
+        if (pb.authStore.isValid) {
+          window.location.href = "dashboard.html";
+        }
+      } catch (error) {
+        document.getElementById("errorMessage").textContent =
+          "Login failed. Please check your credentials.";
+        console.error("Login error:", error);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -4,16 +4,30 @@
 #include <TFT_eSPI.h>
 #include <WiFiUdp.h>
 
-// Wi-Fi config
-const char* ssid     = "Mlicking";
-const char* password = "12345678";
+#if defined(__has_include)
+#if __has_include("config.h")
+#include "config.h"
+#endif
+#endif
 
-// UDP config
-const char* udpHost = "146.190.212.1";
-const uint16_t udpPort = 5005;
+#ifndef WIFI_SSID
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#endif
+
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#endif
+
+#ifndef UDP_HOST
+#define UDP_HOST "YOUR_SERVER_IP"
+#endif
+
+#ifndef UDP_PORT
+#define UDP_PORT 5005
+#endif
+
 const uint16_t localPort = 6000;
 
-// Global objects
 WiFiUDP udp;
 Adafruit_SHT4x sht4x;
 TFT_eSPI tft;
@@ -27,6 +41,7 @@ bool pumpOn = false;
 unsigned long lastSensorRead = 0;
 unsigned long lastWaterTime = 0;
 unsigned long pumpStartTime = 0;
+unsigned long lastDisplayUpdate = 0;
 unsigned long displayInterval = 3000;
 unsigned long sensorInterval = 5000;
 unsigned long pumpDuration = 60000;
@@ -59,19 +74,21 @@ void setup() {
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, LOW);
 
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to Wi-Fi");
   unsigned long t0 = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - t0 < 10000) {
     Serial.print('.');
     delay(500);
   }
+
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("\nWi-Fi FAILED");
     tft.fillScreen(TFT_RED);
     tft.drawString("Wi-Fi Failed!", 50, 50);
     while (1) delay(1000);
   }
+
   Serial.println("\nWi-Fi connected, IP: " + WiFi.localIP().toString());
 
   udp.begin(localPort);
@@ -88,7 +105,7 @@ void sendUDP(float temp, float hum, int soil, int light) {
     "\"light_intensity\":" + String(light) +
     "}";
 
-  udp.beginPacket(udpHost, udpPort);
+  udp.beginPacket(UDP_HOST, UDP_PORT);
   udp.write((const uint8_t*)payload.c_str(), payload.length());
   udp.endPacket();
 
@@ -112,7 +129,6 @@ void updateDisplay(float temp, float hum, int soil, int light, bool pumpStatus) 
 void loop() {
   unsigned long now = millis();
 
-  // Handle sensor reading and sending every few seconds
   if (now - lastSensorRead >= sensorInterval) {
     lastSensorRead = now;
 
@@ -125,12 +141,11 @@ void loop() {
     lightPercent = map(lightRaw, 0, 1023, 0, 100);
     soilMoisture = analogRead(sensorPin);
 
-    Serial.printf("T:%.2f°C H:%.2f%% Soil:%d Light:%d%%\n",
+    Serial.printf("T:%.2fC H:%.2f%% Soil:%d Light:%d%%\n",
       temperature, humidity, soilMoisture, lightPercent);
 
     sendUDP(temperature, humidity, soilMoisture, lightPercent);
 
-    // If soil is dry and pump is not already on, start it
     if (!pumpOn && soilMoisture < soilThreshold && (now - lastWaterTime > pumpCooldown)) {
       digitalWrite(relayPin, HIGH);
       pumpOn = true;
@@ -140,15 +155,14 @@ void loop() {
     }
   }
 
-  // Check if pump should be turned off
   if (pumpOn && (now - pumpStartTime >= pumpDuration)) {
     digitalWrite(relayPin, LOW);
     pumpOn = false;
     Serial.println("Pump turned OFF");
   }
 
-  // Refresh screen periodically
-  if (now - lastWaterTime >= displayInterval) {
+  if (now - lastDisplayUpdate >= displayInterval) {
+    lastDisplayUpdate = now;
     updateDisplay(temperature, humidity, soilMoisture, lightPercent, pumpOn);
   }
 }

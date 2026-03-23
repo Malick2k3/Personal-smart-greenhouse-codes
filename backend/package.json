@@ -1,0 +1,14 @@
+{
+  "name": "smart-greenhouse-backend-utils",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Utility scripts for working with Smart Greenhouse readings in PocketBase.",
+  "scripts": {
+    "list:readings": "node ./scripts/list-readings.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "pocketbase": "^0.26.2"
+  }
+}

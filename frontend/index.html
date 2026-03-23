@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome | Smart Greenhouse</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --text-color: #333;
+      --accent-color: #2f7d68;
+      --accent-hover: #256653;
+      --nav-bg: white;
+      --link-color: #333;
+      --link-hover: var(--accent-color);
+      --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      --hero-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark {
+      --bg-color: #1e1e1e;
+      --text-color: #f4f4f4;
+      --accent-color: #8bc34a;
+      --accent-hover: #7cb342;
+      --nav-bg: #2c2c2c;
+      --link-color: #ddd;
+      --link-hover: var(--accent-color);
+      --shadow: 0 4px 8px rgba(255, 255, 255, 0.05);
+      --hero-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+    }
+
+    nav {
+      background-color: var(--nav-bg);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      flex-wrap: wrap;
+    }
+
+    .nav-brand {
+      font-weight: 700;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--link-color);
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--link-hover);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 60px 20px 40px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+
+    .hero-img {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 20px;
+      margin: 30px 0;
+      box-shadow: var(--hero-shadow);
+    }
+
+    p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      max-width: 680px;
+      line-height: 1.6;
+    }
+
+    .auth-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      max-width: 400px;
+    }
+
+    .auth-buttons a {
+      padding: 15px 30px;
+      background-color: var(--accent-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .auth-buttons a:hover {
+      background-color: var(--accent-hover);
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav-links {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .nav-links a {
+        margin: 5px 0;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .auth-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .auth-buttons a {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-brand">Smart Greenhouse</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Welcome to Smart Greenhouse</h1>
+    <img src="./assets/greenhouse-project.jpg" alt="Smart greenhouse setup" class="hero-img">
+    <p>
+      Monitor temperature, humidity, soil moisture, and light levels from one dashboard while the watering
+      system reacts automatically when the soil gets too dry.
+    </p>
+    <div class="auth-buttons">
+      <a href="signup.html">Get Started</a>
+      <a href="login.html">Sign In</a>
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="https://unpkg.com/pocketbase@latest/dist/pocketbase.umd.js"></script>
+  <script>
+    const pb = new PocketBase(window.SMART_GREENHOUSE_CONFIG.pocketBaseUrl);
+
+    if (pb.authStore.isValid) {
+      window.location.href = "dashboard.html";
+    }
+
+    window.onload = () => {
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark");
+      }
+    };
+  </script>
+</body>
+</html>

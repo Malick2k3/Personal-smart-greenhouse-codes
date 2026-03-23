@@ -1,0 +1,6 @@
+#pragma once
+
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define UDP_HOST "YOUR_SERVER_IP"
+#define UDP_PORT 5005
